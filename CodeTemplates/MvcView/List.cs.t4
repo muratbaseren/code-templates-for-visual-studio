@@ -1,0 +1,159 @@
+﻿<#@ template language="C#" HostSpecific="True" #>
+<#@ output extension=".cshtml" #>
+<#@ include file="Imports.include.t4" #>
+@model IEnumerable<#= "<" + ViewDataTypeName + ">" #>
+<#
+// The following chained if-statement outputs the file header code and markup for a partial view, a view using a layout page, or a regular view.
+if(IsPartialView) {
+#>
+
+<#
+} else if(IsLayoutPageSelected) {
+#>
+
+@{
+    ViewBag.Title = "<#= ViewName#>";
+<#
+if (!String.IsNullOrEmpty(LayoutPageFile)) {
+#>
+    Layout = "<#= LayoutPageFile#>";
+<#
+}
+#>
+}
+
+<h2>@ViewBag.Title</h2>
+
+<#
+} else {
+#>
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+</head>
+<body>
+<#
+    PushIndent("    ");
+}
+#>
+<p>
+    @*@Html.ActionLink("Create New", "Create", null, new { @class="btn btn-primary" })*@
+    <a href="@Url.Action("Create")" class="btn btn-primary">
+        <span class="glyphicon glyphicon-plus"></span>
+        Create New
+    </a>
+</p>
+<div class="table-responsive">
+    <table class="table table-responsive table-hover table-striped table-bordered">
+        <tr>
+<#
+IEnumerable<PropertyMetadata> properties = ModelMetadata.Properties;
+foreach (PropertyMetadata property in properties) {
+    if (property.Scaffold && !property.IsPrimaryKey && !property.IsForeignKey) {
+#>
+<#
+        // We do not want to show any association properties for which there is
+        // no associated foreign key.
+        if (property.IsAssociation && GetRelatedModelMetadata(property) == null) {
+            continue;
+        }
+#>
+            <th>
+                @Html.DisplayNameFor(model => model.<#= GetValueExpression(property) #>)
+            </th>
+<#
+    }
+}
+#>
+            <th></th>
+        </tr>
+
+@foreach (var item in Model) {
+        <tr>
+<#
+foreach (PropertyMetadata property in properties) {
+    if (property.Scaffold && !property.IsPrimaryKey && !property.IsForeignKey) {
+#>
+<#
+        // We do not want to show any association properties for which there is
+        // no associated foreign key.
+        if (property.IsAssociation && GetRelatedModelMetadata(property) == null) {
+            continue;
+        }
+#>
+            <td>
+                @Html.DisplayFor(modelItem => <#= "item." + GetValueExpression(property) #>)
+            </td>
+<#
+    }
+}
+
+string pkName = GetPrimaryKeyName();
+if (pkName != null) {
+#>
+            <td>
+                @*@Html.ActionLink("Edit", "Edit", new { id=item.<#= pkName #> }, new { @class="btn btn-warning btn-xs" })
+                @Html.ActionLink("Details", "Details", new { id=item.<#= pkName #> }, new { @class="btn btn-info btn-xs" })
+                @Html.ActionLink("Delete", "Delete", new { id=item.<#= pkName #> }, new { @class="btn btn-danger btn-xs" })*@
+
+                <a href="@Url.Action("Edit", new { id=item.<#= pkName #> })" class="btn btn-warning btn-xs">
+                    <span class="glyphicon glyphicon-edit"></span>
+                </a>
+
+                <a href="@Url.Action("Details", new { id=item.<#= pkName #> })" class="btn btn-info btn-xs">
+                    <span class="glyphicon glyphicon-search"></span>
+                </a>
+
+                <a href="@Url.Action("Delete", new { id=item.<#= pkName #> })" class="btn btn-danger btn-xs">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </a>
+            </td>
+<#
+} else {
+#>
+            <td>
+                @*@Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }, new { @class="btn btn-warning btn-xs" })
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }, new { @class="btn btn-info btn-xs" }) 
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ }, new { @class="btn btn-danger btn-xs" })*@
+
+                <a href="@Url.Action("Edit", new { /* id=item.PrimaryKey */ })" class="btn btn-warning btn-xs">
+                    <span class="glyphicon glyphicon-edit"></span>
+                </a>
+
+                <a href="@Url.Action("Details", new { /* id=item.PrimaryKey */ })" class="btn btn-info btn-xs">
+                    <span class="glyphicon glyphicon-search"></span>
+                </a>
+
+                <a href="@Url.Action("Delete", new { /* id=item.PrimaryKey */ })" class="btn btn-danger btn-xs">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </a>
+            </td>
+<#
+}
+#>
+        </tr>
+}
+
+    </table>
+</div>
+<#
+// The following code closes the tag used in the case of a view using a layout page and the body and html tags in the case of a regular view page
+#>
+<#
+if(!IsPartialView && !IsLayoutPageSelected) {
+    ClearIndent();
+#>
+</body>
+</html>
+<#
+}
+#>
+<#@ include file="ModelMetadataFunctions.cs.include.t4" #>
